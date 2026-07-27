@@ -25,3 +25,33 @@ export const registerBroker = async ({ name, email, password }) => {
 
   return result.rows[0];
 };
+
+export const loginBroker = async ({ email, password }) => {
+  const result = await pool.query(
+    `SELECT *
+     FROM brokers
+     WHERE email = $1`,
+    [email]
+  );
+
+  if (result.rows.length === 0) {
+    const error = new Error("Invalid email or password");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const broker = result.rows[0];
+
+  const passwordMatch = await bcrypt.compare(
+    password,
+    broker.password_hash
+  );
+
+  if (!passwordMatch) {
+    const error = new Error("Invalid email or password");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  return broker;
+};
