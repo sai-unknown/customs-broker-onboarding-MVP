@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+
 import PageContainer from "../components/layout/PageContainer";
 import CustomerTable from "../components/customers/CustomerTable";
+import SearchBar from "../components/common/SearchBar";
+import Pagination from "../components/common/Pagination";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import Modal from "../components/ui/Modal";
+import Button from "../components/ui/Button";
+
 import {
   getCustomers,
   deleteCustomer,
@@ -9,36 +17,85 @@ import {
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
+
+  const ITEMS_PER_PAGE = 5;
 
   const loadCustomers = async () => {
+    setLoading(true);
+
     try {
       const data = await getCustomers();
       setCustomers(data);
+    } catch {
+      toast.error("Failed to load customers");
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadCustomers();
+    const fetchCustomers = async () => {
+      await loadCustomers();
+    };
+
+    fetchCustomers();
   }, []);
 
-  const handleDelete = async (id) => {
-    const confirmed = window.confirm(
-      "Delete this customer?"
-    );
-
-    if (!confirmed) return;
-
-    await deleteCustomer(id);
-
-    loadCustomers();
+  const handleDelete = (id) => {
+    setCustomerToDelete(id);
   };
+
+  const confirmDelete = async () => {
+    try {
+      await deleteCustomer(customerToDelete);
+
+      toast.success("Customer deleted");
+
+      // If deleting the last customer on the current page,
+      // move back one page (unless already on page 1)
+      if (paginatedCustomers.length === 1 && currentPage > 1) {
+        setCurrentPage((page) => page - 1);
+      }
+
+      await loadCustomers();
+    } catch {
+      toast.error("Failed to delete customer");
+    } finally {
+      setCustomerToDelete(null);
+    }
+  };
+
+  // Filter customers
+  const filteredCustomers = customers.filter((customer) => {
+    const term = search.toLowerCase();
+
+    return (
+      customer.name.toLowerCase().includes(term) ||
+      customer.email.toLowerCase().includes(term) ||
+      customer.gstin.toLowerCase().includes(term)
+    );
+  });
+
+  // Pagination
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredCustomers.length / ITEMS_PER_PAGE)
+  );
+
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  const paginatedCustomers = filteredCustomers.slice(
+    startIndex,
+    startIndex + ITEMS_PER_PAGE
+  );
 
   if (loading) {
     return (
       <PageContainer>
-        <h2>Loading...</h2>
+        <LoadingSpinner />
       </PageContainer>
     );
   }
@@ -49,10 +106,67 @@ export default function Customers() {
         Customers
       </h1>
 
+      <SearchBar
+        value={search}
+        onChange={(value) => {
+          setSearch(value);
+          setCurrentPage(1);
+        }}
+        placeholder="Search by name, email or GSTIN..."
+      />
+
+      <p className="mb-4 text-sm text-gray-500">
+        Showing{" "}
+        {filteredCustomers.length === 0
+          ? 0
+          : startIndex + 1}
+        –
+        {Math.min(
+          startIndex + ITEMS_PER_PAGE,
+          filteredCustomers.length
+        )}{" "}
+        of {filteredCustomers.length} customers
+      </p>
+
       <CustomerTable
-        customers={customers}
+        customers={paginatedCustomers}
         onDelete={handleDelete}
       />
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
+
+      <Modal
+        isOpen={customerToDelete !== null}
+        title="Delete Customer"
+        onClose={() => setCustomerToDelete(null)}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setCustomerToDelete(null)}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="danger"
+              onClick={confirmDelete}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      >
+        <p>Are you sure you want to delete this customer?</p>
+
+        <p className="mt-2 text-sm text-gray-500">
+          This action cannot be undone.
+        </p>
+      </Modal>
     </PageContainer>
   );
 }

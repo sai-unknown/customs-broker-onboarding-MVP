@@ -5,6 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "../api/axios";
 import useAuth from "../hooks/useAuth";
+import { toast } from "react-hot-toast";
 
 const loginSchema = z.object({
   email: z.string().email("Enter a valid email"),
@@ -35,7 +36,8 @@ export default function Login() {
 
       navigate("/");
     } catch (err) {
-      alert(err.response?.data?.message || "Login failed");
+      toast.error(err.response?.data?.message || "Login failed"
+);
     } finally {
       setLoading(false);
     }
