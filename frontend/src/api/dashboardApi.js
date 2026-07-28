@@ -1,9 +1,6 @@
-import { getCustomers } from "./customerApi";
+import api from "./axios";
 
 export async function getDashboardStats() {
-  const customers = await getCustomers();
-
-  return {
-    totalCustomers: customers.length,
-  };
+  const response = await api.get("/dashboard");
+  return response.data.data;
 }

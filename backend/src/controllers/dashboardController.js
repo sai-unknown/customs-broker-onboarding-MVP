@@ -1,26 +1,25 @@
-import prisma from "../config/prisma.js";
+import pool from "../config/db.js";
 
 export const getDashboardStats = async (req, res, next) => {
   try {
-    const totalCustomers = await prisma.customer.count();
+    // Total customers
+    const totalResult = await pool.query(
+      "SELECT COUNT(*) FROM customers"
+    );
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const newToday = await prisma.customer.count({
-      where: {
-        createdAt: {
-          gte: today,
-        },
-      },
-    });
+    // Customers created today
+    const todayResult = await pool.query(`
+      SELECT COUNT(*)
+      FROM customers
+      WHERE created_at::date = CURRENT_DATE
+    `);
 
     res.json({
       success: true,
       data: {
-        totalCustomers,
+        totalCustomers: Number(totalResult.rows[0].count),
         activeBroker: 1,
-        newToday,
+        newToday: Number(todayResult.rows[0].count),
       },
     });
   } catch (error) {
