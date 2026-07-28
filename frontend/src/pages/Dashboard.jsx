@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 
 import PageContainer from "../components/layout/PageContainer";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import ErrorMessage from "../components/common/ErrorMessage";
 import Card from "../components/ui/Card";
 
 import useAuth from "../hooks/useAuth";
@@ -19,6 +20,7 @@ export default function Dashboard() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     const loadStats = async () => {
@@ -26,6 +28,7 @@ export default function Dashboard() {
         const data = await getDashboardStats();
         setStats(data);
       } catch {
+        setError(true);
         toast.error("Failed to load dashboard");
       } finally {
         setLoading(false);
@@ -39,6 +42,17 @@ export default function Dashboard() {
     return (
       <PageContainer>
         <LoadingSpinner />
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer>
+        <ErrorMessage
+          title="Dashboard Unavailable"
+          message="Unable to load dashboard statistics. Please refresh the page and try again."
+        />
       </PageContainer>
     );
   }

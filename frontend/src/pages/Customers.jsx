@@ -7,6 +7,7 @@ import SearchBar from "../components/common/SearchBar";
 import Pagination from "../components/common/Pagination";
 import LoadingSpinner from "../components/common/LoadingSpinner";
 import EmptyState from "../components/common/EmptyState";
+import ErrorMessage from "../components/common/ErrorMessage";
 import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
 
@@ -18,6 +19,7 @@ import {
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [customerToDelete, setCustomerToDelete] = useState(null);
@@ -26,11 +28,13 @@ export default function Customers() {
 
   const loadCustomers = async () => {
     setLoading(true);
+    setError(false);
 
     try {
       const data = await getCustomers();
       setCustomers(data);
     } catch {
+      setError(true);
       toast.error("Failed to load customers");
     } finally {
       setLoading(false);
@@ -57,7 +61,7 @@ export default function Customers() {
 
       await loadCustomers();
     } catch {
-      toast.error("Failed to delete customer");
+      toast.error("Unable to delete customer. Please try again.");
     } finally {
       setCustomerToDelete(null);
     }
@@ -92,6 +96,18 @@ export default function Customers() {
     return (
       <PageContainer>
         <LoadingSpinner />
+      </PageContainer>
+    );
+  }
+
+  // Error
+  if (error) {
+    return (
+      <PageContainer>
+        <ErrorMessage
+          title="Unable to Load Customers"
+          message="Please refresh the page and try again."
+        />
       </PageContainer>
     );
   }
@@ -150,7 +166,7 @@ export default function Customers() {
 
       <p className="mb-4 text-sm text-gray-500">
         Showing{" "}
-        {startIndex + 1} –
+        {startIndex + 1}–
         {Math.min(
           startIndex + ITEMS_PER_PAGE,
           filteredCustomers.length
@@ -191,7 +207,9 @@ export default function Customers() {
           </>
         }
       >
-        <p>Are you sure you want to delete this customer?</p>
+        <p>
+          Are you sure you want to delete this customer?
+        </p>
 
         <p className="mt-2 text-sm text-gray-500">
           This action cannot be undone.
