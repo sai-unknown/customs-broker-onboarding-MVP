@@ -6,6 +6,7 @@ import CustomerTable from "../components/customers/CustomerTable";
 import SearchBar from "../components/common/SearchBar";
 import Pagination from "../components/common/Pagination";
 import LoadingSpinner from "../components/common/LoadingSpinner";
+import EmptyState from "../components/common/EmptyState";
 import Modal from "../components/ui/Modal";
 import Button from "../components/ui/Button";
 
@@ -37,11 +38,7 @@ export default function Customers() {
   };
 
   useEffect(() => {
-    const fetchCustomers = async () => {
-      await loadCustomers();
-    };
-
-    fetchCustomers();
+    loadCustomers();
   }, []);
 
   const handleDelete = (id) => {
@@ -54,8 +51,6 @@ export default function Customers() {
 
       toast.success("Customer deleted");
 
-      // If deleting the last customer on the current page,
-      // move back one page (unless already on page 1)
       if (paginatedCustomers.length === 1 && currentPage > 1) {
         setCurrentPage((page) => page - 1);
       }
@@ -68,7 +63,7 @@ export default function Customers() {
     }
   };
 
-  // Filter customers
+  // Search
   const filteredCustomers = customers.filter((customer) => {
     const term = search.toLowerCase();
 
@@ -92,10 +87,48 @@ export default function Customers() {
     startIndex + ITEMS_PER_PAGE
   );
 
+  // Loading
   if (loading) {
     return (
       <PageContainer>
         <LoadingSpinner />
+      </PageContainer>
+    );
+  }
+
+  // Empty State
+  if (filteredCustomers.length === 0) {
+    return (
+      <PageContainer>
+        <h1 className="mb-6 text-3xl font-bold">
+          Customers
+        </h1>
+
+        <SearchBar
+          value={search}
+          onChange={(value) => {
+            setSearch(value);
+            setCurrentPage(1);
+          }}
+          placeholder="Search by name, email or GSTIN..."
+        />
+
+        <EmptyState
+          title={
+            search
+              ? "No Matching Customers"
+              : "No Customers Yet"
+          }
+          description={
+            search
+              ? "Try searching with a different name, email or GSTIN."
+              : "You haven't added any customers yet."
+          }
+          buttonText={
+            search ? null : "Add Customer"
+          }
+          buttonLink="/customers/new"
+        />
       </PageContainer>
     );
   }
@@ -117,10 +150,7 @@ export default function Customers() {
 
       <p className="mb-4 text-sm text-gray-500">
         Showing{" "}
-        {filteredCustomers.length === 0
-          ? 0
-          : startIndex + 1}
-        –
+        {startIndex + 1} –
         {Math.min(
           startIndex + ITEMS_PER_PAGE,
           filteredCustomers.length

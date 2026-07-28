@@ -73,33 +73,29 @@ navigate("/customers");
         className="max-w-xl space-y-4 rounded-lg bg-white p-6 shadow"
       >
         <div>
-          <label>Name</label>
           <Input
             label="Name"
             error={errors.name?.message}
             {...register("name")}
           />
-          <p className="text-sm text-red-600">{errors.name?.message}</p>
         </div>
 
         <div>
-          <label>Email</label>
           <Input
             label="Email"
             error={errors.email?.message}
             {...register("email")}
           />
-          <p className="text-sm text-red-600">{errors.email?.message}</p>
-        </div>
-
+          </div>
+          
         <div>
-          <label>GSTIN</label>
           <Input
             label="GSTIN"
             error={errors.gstin?.message}
-            {...register("gstin")}
+            {...register("gstin", {
+              setValueAs: (value) => value.toUpperCase(),
+            })}
           />
-          <p className="text-sm text-red-600">{errors.gstin?.message}</p>
         </div>
 
         <div>
