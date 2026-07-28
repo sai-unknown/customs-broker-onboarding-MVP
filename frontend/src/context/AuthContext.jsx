@@ -1,5 +1,6 @@
-import { createContext, useEffect, useState } from "react";
-import api from "../api/axios";
+import { useEffect } from "react";
+import { createContext, useCallback, useState } from "react";
+import api, { setUnauthorizedHandler } from "../api/axios";
 
 export const AuthContext = createContext();
 
@@ -7,15 +8,24 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem("token");
+    setUser(null);
+  }, []);
+
   const login = (userData, token) => {
     localStorage.setItem("token", token);
     setUser(userData);
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-  };
+  useEffect(() => {
+    setUnauthorizedHandler(() => {
+      localStorage.removeItem("token");
+      setUser(null);
+    });
+
+    return () => setUnauthorizedHandler(null);
+  }, []);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -29,7 +39,7 @@ export function AuthProvider({ children }) {
       try {
         const res = await api.get("/auth/me");
         setUser(res.data.data);
-      } catch (err) {
+      } catch {
         localStorage.removeItem("token");
         setUser(null);
       } finally {

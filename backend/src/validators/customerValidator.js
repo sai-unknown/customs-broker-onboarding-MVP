@@ -11,7 +11,11 @@ export const customerSchema = z.object({
 
   gstin: z
     .string()
-    .length(15, "GSTIN must be exactly 15 characters"),
+    .length(15, "GSTIN must be exactly 15 characters")
+    .regex(
+      /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/,
+      "Invalid GSTIN format"
+    ),
 
   type: z.enum(["EXPORTER", "IMPORTER"]),
 });

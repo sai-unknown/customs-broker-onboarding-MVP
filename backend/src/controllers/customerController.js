@@ -1,5 +1,6 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import { customerSchema } from "../validators/customerValidator.js";
+import { idParamSchema } from "../validators/paramsValidator.js";
 
 import {
   createCustomer,
@@ -31,10 +32,9 @@ export const getAllCustomers = asyncHandler(async (req, res) => {
 });
 
 export const getCustomer = asyncHandler(async (req, res) => {
-  const customer = await getCustomerById(
-    req.user.id,
-    req.params.id
-  );
+  const { id } = idParamSchema.parse(req.params);
+
+  const customer = await getCustomerById(req.user.id, id);
 
   res.json({
     success: true,
@@ -43,11 +43,12 @@ export const getCustomer = asyncHandler(async (req, res) => {
 });
 
 export const editCustomer = asyncHandler(async (req, res) => {
+  const { id } = idParamSchema.parse(req.params);
   const validatedData = customerSchema.parse(req.body);
 
   const customer = await updateCustomer(
     req.user.id,
-    req.params.id,
+    id,
     validatedData
   );
 
@@ -59,10 +60,9 @@ export const editCustomer = asyncHandler(async (req, res) => {
 });
 
 export const removeCustomer = asyncHandler(async (req, res) => {
-  await deleteCustomer(
-    req.user.id,
-    req.params.id
-  );
+  const { id } = idParamSchema.parse(req.params);
+
+  await deleteCustomer(req.user.id, id);
 
   res.json({
     success: true,

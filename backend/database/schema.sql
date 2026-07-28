@@ -21,5 +21,15 @@ CREATE TABLE customers (
     CONSTRAINT fk_customer_broker
         FOREIGN KEY (broker_id)
         REFERENCES brokers(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT uq_customers_broker_email
+        UNIQUE (broker_id, email),
+
+    CONSTRAINT uq_customers_broker_gstin
+        UNIQUE (broker_id, gstin)
 );
+
+CREATE INDEX idx_customers_broker_id ON customers(broker_id);
+CREATE INDEX idx_customers_created_at ON customers(created_at);
+CREATE INDEX idx_brokers_email ON brokers(email);

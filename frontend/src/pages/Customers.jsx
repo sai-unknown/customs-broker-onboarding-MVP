@@ -23,6 +23,7 @@ export default function Customers() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [customerToDelete, setCustomerToDelete] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
   const ITEMS_PER_PAGE = 5;
 
@@ -51,6 +52,7 @@ export default function Customers() {
 
   const confirmDelete = async () => {
     try {
+      setDeletingId(customerToDelete);
       await deleteCustomer(customerToDelete);
 
       toast.success("Customer deleted");
@@ -63,6 +65,7 @@ export default function Customers() {
     } catch {
       toast.error("Unable to delete customer. Please try again.");
     } finally {
+      setDeletingId(null);
       setCustomerToDelete(null);
     }
   };
@@ -177,6 +180,7 @@ export default function Customers() {
       <CustomerTable
         customers={paginatedCustomers}
         onDelete={handleDelete}
+        deletingId={deletingId}
       />
 
       <Pagination

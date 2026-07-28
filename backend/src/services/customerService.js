@@ -1,17 +1,22 @@
 import pool from "../config/db.js";
+import { handleCustomerDbError } from "../utils/dbErrors.js";
 
 export const createCustomer = async (brokerId, customerData) => {
   const { name, email, gstin, type } = customerData;
 
-  const result = await pool.query(
-    `INSERT INTO customers
-    (broker_id, name, email, gstin, type)
-    VALUES ($1, $2, $3, $4, $5)
-    RETURNING *`,
-    [brokerId, name, email, gstin, type]
-  );
+  try {
+    const result = await pool.query(
+      `INSERT INTO customers
+      (broker_id, name, email, gstin, type)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *`,
+      [brokerId, name, email.toLowerCase(), gstin.toUpperCase(), type]
+    );
 
-  return result.rows[0];
+    return result.rows[0];
+  } catch (error) {
+    handleCustomerDbError(error);
+  }
 };
 
 export const getCustomers = async (brokerId) => {
@@ -52,27 +57,34 @@ export const updateCustomer = async (
 ) => {
   const { name, email, gstin, type } = customerData;
 
-  const result = await pool.query(
-    `UPDATE customers
-     SET
-       name = $1,
-       email = $2,
-       gstin = $3,
-       type = $4,
-       updated_at = CURRENT_TIMESTAMP
-     WHERE id = $5
-       AND broker_id = $6
-     RETURNING *`,
-    [name, email, gstin, type, customerId, brokerId]
-  );
+  try {
+    const result = await pool.query(
+      `UPDATE customers
+       SET
+         name = $1,
+         email = $2,
+         gstin = $3,
+         type = $4,
+         updated_at = CURRENT_TIMESTAMP
+       WHERE id = $5
+         AND broker_id = $6
+       RETURNING *`,
+      [name, email.toLowerCase(), gstin.toUpperCase(), type, customerId, brokerId]
+    );
 
-  if (result.rows.length === 0) {
-    const error = new Error("Customer not found");
-    error.statusCode = 404;
-    throw error;
+    if (result.rows.length === 0) {
+      const error = new Error("Customer not found");
+      error.statusCode = 404;
+      throw error;
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    if (error.statusCode) {
+      throw error;
+    }
+    handleCustomerDbError(error);
   }
-
-  return result.rows[0];
 };
 
 export const deleteCustomer = async (

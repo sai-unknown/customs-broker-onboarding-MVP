@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-export default function CustomerTable({ customers, onDelete }) {
+export default function CustomerTable({ customers, onDelete, deletingId }) {
   if (customers.length === 0) {
     return (
       <div className="rounded-lg bg-white p-6 text-center shadow">
@@ -20,11 +20,11 @@ export default function CustomerTable({ customers, onDelete }) {
       <table className="min-w-full">
         <thead className="bg-gray-100">
           <tr>
-            <th className="px-4 py-3 text-left">Name</th>
-            <th className="px-4 py-3 text-left">Email</th>
-            <th className="px-4 py-3 text-left">GSTIN</th>
-            <th className="px-4 py-3 text-left">Type</th>
-            <th className="px-4 py-3 text-center">Actions</th>
+            <th scope="col" className="px-4 py-3 text-left">Name</th>
+            <th scope="col" className="px-4 py-3 text-left">Email</th>
+            <th scope="col" className="px-4 py-3 text-left">GSTIN</th>
+            <th scope="col" className="px-4 py-3 text-left">Type</th>
+            <th scope="col" className="px-4 py-3 text-center">Actions</th>
           </tr>
         </thead>
 
@@ -45,10 +45,12 @@ export default function CustomerTable({ customers, onDelete }) {
                 </Link>
 
                 <button
+                  type="button"
                   onClick={() => onDelete(customer.id)}
-                  className="rounded bg-red-600 px-3 py-1 text-white"
+                  disabled={deletingId === customer.id}
+                  className="rounded bg-red-600 px-3 py-1 text-white disabled:opacity-50"
                 >
-                  Delete
+                  {deletingId === customer.id ? "Deleting..." : "Delete"}
                 </button>
               </td>
             </tr>

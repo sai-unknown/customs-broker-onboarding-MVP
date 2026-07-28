@@ -4,6 +4,12 @@ import { generateToken } from "../utils/jwt.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 export const register = asyncHandler(async (req, res) => {
+  if (process.env.ALLOW_PUBLIC_REGISTRATION === "false") {
+    const error = new Error("Registration is currently disabled");
+    error.statusCode = 403;
+    throw error;
+  }
+
   const validatedData = registerSchema.parse(req.body);
 
   const broker = await registerBroker(validatedData);

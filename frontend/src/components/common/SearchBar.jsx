@@ -1,8 +1,12 @@
 export default function SearchBar({ value, onChange, placeholder }) {
   return (
     <div className="mb-6">
+      <label htmlFor="customer-search" className="sr-only">
+        Search customers
+      </label>
       <input
-        type="text"
+        id="customer-search"
+        type="search"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}

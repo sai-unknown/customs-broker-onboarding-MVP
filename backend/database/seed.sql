@@ -1,3 +1,6 @@
+-- Seed data for local development
+-- Default login: sai@example.com / Password1
+
 INSERT INTO brokers (
     name,
     email,
@@ -6,7 +9,7 @@ INSERT INTO brokers (
 VALUES (
     'Sai Customs Broker',
     'sai@example.com',
-    '$2b$10$ReplaceWithRealBcryptHashLater'
+    '$2b$10$CFh3CPSUebwz2dxqEg3IEejSGuCU2zpClfB9XU8dUZNXiH1f5lBrO'
 );
 
 INSERT INTO customers (
