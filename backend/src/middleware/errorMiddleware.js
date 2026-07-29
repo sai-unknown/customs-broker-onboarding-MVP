@@ -1,10 +1,24 @@
 import { ZodError } from "zod";
+import { logger } from "../utils/logger.js";
 
 export const errorHandler = (err, req, res, next) => {
-  if (process.env.NODE_ENV !== "production") {
-    console.error(err);
+  const statusCode = err.statusCode || 500;
+
+  if (process.env.NODE_ENV === "production") {
+    logger.error("Request error", {
+      message: err.message,
+      statusCode,
+      path: req.path,
+      method: req.method,
+    });
   } else {
-    console.error(err.message);
+    logger.error("Request error", {
+      message: err.message,
+      statusCode,
+      stack: err.stack,
+      path: req.path,
+      method: req.method,
+    });
   }
 
   if (err instanceof ZodError) {
@@ -22,11 +36,9 @@ export const errorHandler = (err, req, res, next) => {
     });
   }
 
-  res.status(err.statusCode || 500).json({
+  res.status(statusCode).json({
     success: false,
     message:
-      err.statusCode && err.statusCode < 500
-        ? err.message
-        : "Internal Server Error",
+      statusCode < 500 ? err.message : "Internal Server Error",
   });
 };

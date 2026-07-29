@@ -7,6 +7,7 @@ import authRoutes from "./routes/authRoutes.js";
 import customerRoutes from "./routes/customerRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
+import pool from "./config/db.js";
 
 import { notFound } from "./middleware/notFoundMiddleware.js";
 import { errorHandler } from "./middleware/errorMiddleware.js";
@@ -16,7 +17,15 @@ dotenv.config();
 
 const app = express();
 
-app.use(helmet());
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
 
 const allowedOrigins = process.env.FRONTEND_URL
   ? process.env.FRONTEND_URL.split(",").map((origin) => origin.trim())
@@ -32,11 +41,23 @@ app.use(
 app.use(express.json({ limit: "10kb" }));
 app.use("/api", apiRateLimiter);
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    success: true,
-    message: "API is running",
-  });
+app.get("/api/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+
+    res.json({
+      success: true,
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  } catch {
+    res.status(503).json({
+      success: false,
+      status: "unhealthy",
+      timestamp: new Date().toISOString(),
+    });
+  }
 });
 
 app.use("/api/auth", authRoutes);

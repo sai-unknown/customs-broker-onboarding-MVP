@@ -9,7 +9,20 @@ export function validateEnv() {
   }
 
   if (process.env.JWT_SECRET.length < 32) {
-    console.error("JWT_SECRET must be at least 32 characters for production security.");
+    console.error("JWT_SECRET must be at least 32 characters.");
     process.exit(1);
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    if (!process.env.FRONTEND_URL) {
+      console.error("FRONTEND_URL is required in production for CORS.");
+      process.exit(1);
+    }
+
+    if (process.env.ALLOW_PUBLIC_REGISTRATION !== "false") {
+      console.warn(
+        "WARNING: ALLOW_PUBLIC_REGISTRATION is not set to 'false'. Public signup is enabled."
+      );
+    }
   }
 }

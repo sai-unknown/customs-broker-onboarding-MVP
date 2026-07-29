@@ -1,0 +1,20 @@
+{
+  "name": "customs-broker-onboarding",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Customs Broker Onboarding System",
+  "scripts": {
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start:backend": "npm run start --prefix backend",
+    "start:frontend": "npm run preview --prefix frontend",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
