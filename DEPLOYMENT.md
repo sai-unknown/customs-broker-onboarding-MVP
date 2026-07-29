@@ -1,225 +1,315 @@
-# Vercel + Railway Deployment Guide
+````markdown
+# 🚀 Vercel + Render + Neon Deployment Guide
 
-Deploy the **frontend on Vercel** and the **backend on Railway** (recommended pairing).
+Deploy the **React frontend on Vercel**, the **Express backend on Render**, and use **Neon PostgreSQL** as the managed cloud database.
 
-```
+```text
 ┌─────────────────┐         ┌─────────────────┐         ┌─────────────────┐
-│  Vercel         │  HTTPS  │  Railway        │         │  Railway        │
-│  React SPA      │ ──────► │  Express API    │ ──────► │  PostgreSQL     │
-│  your-app.vercel│         │  *.railway.app  │         │  (managed)      │
+│     Vercel      │  HTTPS  │     Render      │         │      Neon       │
+│   React + Vite  │ ──────► │  Express API    │ ──────► │  PostgreSQL     │
+│ *.vercel.app    │         │ *.onrender.com  │         │  Managed Cloud  │
 └─────────────────┘         └─────────────────┘         └─────────────────┘
 ```
 
 ---
 
-## Why this stack?
+# Why this stack?
 
 | Service | Role | Why |
 |---------|------|-----|
-| **Vercel** | Frontend | Best-in-class for React/Vite, global CDN, free tier |
-| **Railway** | Backend + DB | Node.js + PostgreSQL in one place, GitHub deploy, simple env vars |
-| **GitHub Actions** | CI/CD | Lint/build on every PR, auto-deploy on merge to `main` |
-
-**Alternatives for backend:** Render, Fly.io, or DigitalOcean App Platform if you prefer.
+| **Vercel** | Frontend | Optimised for React & Vite, global CDN, free SSL, automatic GitHub deployments |
+| **Render** | Backend | Easy Node.js hosting with automatic deployments and HTTPS |
+| **Neon** | PostgreSQL | Serverless PostgreSQL with generous free tier, automatic backups and branching |
+| **GitHub** | Source Control | Automatic deployments on every push to `main` |
 
 ---
 
-## Part 1 — Railway (Backend + Database)
+# Architecture
 
-### Step 1: Create Railway project
+```text
+GitHub Repository
+        │
+        ▼
+ ┌─────────────────┐
+ │     Vercel      │
+ │  React Frontend │
+ └────────┬────────┘
+          │ HTTPS
+          ▼
+ ┌─────────────────┐
+ │     Render      │
+ │  Express API    │
+ └────────┬────────┘
+          │
+          ▼
+ ┌─────────────────┐
+ │      Neon       │
+ │ PostgreSQL DB   │
+ └─────────────────┘
+```
 
-1. Go to [railway.app](https://railway.app) and sign in with GitHub
-2. **New Project** → **Deploy from GitHub repo** → select this repo
-3. Set **Root Directory** to `backend`
-4. Railway auto-detects Node.js via `railway.json`
+---
 
-### Step 2: Add PostgreSQL
+# Part 1 — Neon PostgreSQL
 
-1. In the same project, click **+ New** → **Database** → **PostgreSQL**
-2. Railway creates `DATABASE_URL` automatically
+## Step 1 — Create a Database
 
-### Step 3: Configure backend environment variables
+1. Sign in to Neon.
+2. Click **Create Project**.
+3. Choose a project name.
+4. Select the nearest region.
+5. Create the database.
 
-In the **backend service** → **Variables**, set:
+Neon generates a connection string similar to:
+
+```text
+postgresql://username:password@ep-xxxx.ap-southeast-1.aws.neon.tech/customsbroker?sslmode=require
+```
+
+Keep this connection string safe.
+
+---
+
+## Step 2 — Import Database Schema
+
+Open **SQL Editor** inside Neon.
+
+Run:
+
+```sql
+backend/database/schema.sql
+```
+
+(Optional)
+
+```sql
+backend/database/seed.sql
+```
+
+for sample data.
+
+---
+
+# Part 2 — Deploy Backend on Render
+
+## Step 1 — Create Web Service
+
+1. Sign in to Render.
+2. Click **New → Web Service**.
+3. Connect your GitHub repository.
+4. Select this project.
+
+Use these settings:
+
+| Setting | Value |
+|---------|-------|
+| Name | customs-broker-api |
+| Runtime | Node |
+| Root Directory | backend |
+| Branch | main |
+| Build Command | `npm install` |
+| Start Command | `npm start` |
+
+---
+
+## Step 2 — Environment Variables
+
+Add the following variables.
 
 | Variable | Value |
 |----------|-------|
 | `NODE_ENV` | `production` |
-| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` (reference from Postgres service) |
-| `JWT_SECRET` | Generate: `openssl rand -hex 32` |
-| `FRONTEND_URL` | `https://your-app.vercel.app` (update after Vercel deploy) |
+| `DATABASE_URL` | Neon PostgreSQL connection string |
+| `JWT_SECRET` | Generate using `openssl rand -hex 32` |
+| `FRONTEND_URL` | `https://your-project.vercel.app` |
 | `ALLOW_PUBLIC_REGISTRATION` | `false` |
-| `DB_SSL` | `true` |
-| `DB_SSL_REJECT_UNAUTHORIZED` | `false` |
-| `PORT` | `5000` |
 
-### Step 4: Run database schema
-
-After Postgres is running, open **PostgreSQL → Connect → Query** (or use Railway CLI):
-
-```bash
-railway connect postgres
-```
-
-Then run the SQL files:
-
-```sql
--- Paste contents of backend/database/schema.sql
-```
-
-Optional seed for dev/staging only.
-
-### Step 5: Get your API URL
-
-1. Backend service → **Settings** → **Networking** → **Generate Domain**
-2. Your API URL will be like: `https://customs-broker-api-production.up.railway.app`
-3. Test: `curl https://YOUR-API.railway.app/api/health`
-
-### Step 6: Railway GitHub secrets (for Actions CD)
-
-1. Railway → Account Settings → **Tokens** → create token
-2. Backend service → **Settings** → copy **Service ID**
-3. Add to GitHub repo → **Settings → Secrets → Actions**:
-
-| Secret | Value |
-|--------|-------|
-| `RAILWAY_TOKEN` | Railway API token |
-| `RAILWAY_SERVICE_ID` | Backend service ID |
-
-> **Tip:** Railway also auto-deploys on push when connected to GitHub — you can use either native Railway deploy or the GitHub Actions workflow.
+If your application supports SSL configuration, ensure your PostgreSQL client accepts Neon SSL connections (`sslmode=require`).
 
 ---
 
-## Part 2 — Vercel (Frontend)
+## Step 3 — Deploy
 
-### Step 1: Import project
+Click **Create Web Service**.
 
-1. Go to [vercel.com](https://vercel.com) and sign in with GitHub
-2. **Add New Project** → import this repo
-3. Configure:
+After deployment you'll receive a URL similar to:
+
+```text
+https://customs-broker-api.onrender.com
+```
+
+Verify:
+
+```bash
+curl https://customs-broker-api.onrender.com/api/health
+```
+
+Expected response:
+
+```json
+{
+  "status": "OK"
+}
+```
+
+---
+
+# Part 3 — Deploy Frontend on Vercel
+
+## Step 1 — Import Repository
+
+1. Sign in to Vercel.
+2. Click **Add New Project**.
+3. Import your GitHub repository.
+
+Configuration:
 
 | Setting | Value |
 |---------|-------|
-| **Framework Preset** | Vite |
-| **Root Directory** | `frontend` |
-| **Build Command** | `npm run build` |
-| **Output Directory** | `dist` |
-| **Install Command** | `npm ci` |
+| Framework | Vite |
+| Root Directory | frontend |
+| Build Command | `npm run build` |
+| Output Directory | dist |
+| Install Command | `npm ci` |
 
-### Step 2: Environment variables
+---
 
-In Vercel project → **Settings → Environment Variables**:
+## Step 2 — Environment Variables
 
-| Variable | Value | Environments |
-|----------|-------|--------------|
-| `VITE_API_URL` | `https://YOUR-API.railway.app/api` | Production, Preview, Development |
+Add:
 
-> **Important:** `VITE_API_URL` is baked in at build time. Redeploy after changing it.
+| Variable | Value |
+|----------|-------|
+| `VITE_API_URL` | `https://customs-broker-api.onrender.com/api` |
 
-### Step 3: Deploy
+> **Important:** Vite embeds environment variables during the build. Redeploy the frontend after changing `VITE_API_URL`.
 
-Click **Deploy**. Vercel uses `frontend/vercel.json` for SPA routing.
+---
 
-Your app will be at: `https://your-project.vercel.app`
+## Step 3 — Deploy
 
-### Step 4: Update Railway CORS
+Click **Deploy**.
 
-Go back to Railway backend variables and set:
+Your application will be available at:
 
+```text
+https://your-project.vercel.app
 ```
+
+---
+
+# Part 4 — Update Backend CORS
+
+Return to Render.
+
+Update:
+
+```env
 FRONTEND_URL=https://your-project.vercel.app
 ```
 
-If you use preview deployments too:
+Save the changes.
 
-```
-FRONTEND_URL=https://your-project.vercel.app,https://your-project-*.vercel.app
-```
-
-(Railway CORS uses exact origins — for preview URLs you may need to list each or use a single production URL.)
-
-### Step 5: Vercel GitHub secrets (for Actions CD)
-
-1. Vercel → Account Settings → **Tokens** → create token
-2. Project → **Settings → General** → copy **Project ID** and **Org ID**
-3. Add to GitHub **Secrets**:
-
-| Secret | Value |
-|--------|-------|
-| `VERCEL_TOKEN` | Vercel API token |
-| `VERCEL_ORG_ID` | Team/personal org ID |
-| `VERCEL_PROJECT_ID` | Project ID |
-| `VITE_API_URL` | `https://YOUR-API.railway.app/api` |
+Render automatically redeploys your backend.
 
 ---
 
-## Part 3 — GitHub Actions
+# Part 5 — Automatic Deployments
 
-Two workflows are included:
+Both platforms support GitHub integration.
 
-### `ci.yml` — Runs on every push & PR
+## Vercel
 
-- Frontend: `npm ci` → lint → build
-- Backend: syntax check + env validation
+Every push to
 
-### `deploy.yml` — Runs on push to `main`
+```text
+main
+```
 
-- Deploys frontend to Vercel (production)
-- Deploys backend to Railway
-
-**To enable CD:** Add all secrets listed above, then merge to `main`.
-
-**CI-only (no Actions deploy):** Use native Vercel + Railway GitHub integrations instead — both auto-deploy on push without GitHub Actions secrets.
+automatically redeploys the frontend.
 
 ---
 
-## Verification checklist
+## Render
+
+Enable
+
+```text
+Auto Deploy = Yes
+```
+
+Every push to
+
+```text
+main
+```
+
+automatically redeploys the backend.
+
+No GitHub Actions are required unless you want additional CI/CD checks.
+
+---
+
+# Verification Checklist
+
+Backend health:
 
 ```bash
-# 1. Backend health
-curl https://YOUR-API.railway.app/api/health
-
-# 2. Frontend loads
-open https://YOUR-APP.vercel.app
-
-# 3. Register/login works
-# 4. Customer CRUD works
-# 5. Check browser console — no CORS errors
+curl https://customs-broker-api.onrender.com/api/health
 ```
+
+Frontend:
+
+```text
+https://your-project.vercel.app
+```
+
+Verify:
+
+- ✅ Application loads
+- ✅ Registration works
+- ✅ Login works
+- ✅ Dashboard loads
+- ✅ Customer CRUD works
+- ✅ No CORS errors
+- ✅ No browser console errors
 
 ---
 
-## Troubleshooting
+# Troubleshooting
 
 | Problem | Solution |
 |---------|----------|
-| CORS error in browser | Set `FRONTEND_URL` on Railway to exact Vercel URL (no trailing slash) |
-| `503 unhealthy` on API | DB schema not applied — run `schema.sql` on Railway Postgres |
-| Frontend calls wrong API | Rebuild Vercel after changing `VITE_API_URL` |
-| `JWT_SECRET` startup error | Must be 32+ characters |
-| SSL database error | Set `DB_SSL=true` on Railway |
-| 404 on page refresh | `vercel.json` rewrites should handle this — verify Root Directory is `frontend` |
+| CORS errors | Ensure `FRONTEND_URL` exactly matches your Vercel URL (no trailing slash). |
+| Render service unavailable | Free Render instances may take 30–60 seconds to wake after inactivity. |
+| Database connection failed | Confirm the Neon connection string includes `sslmode=require`. |
+| API returns 500 | Verify `schema.sql` has been imported into Neon. |
+| Frontend uses incorrect API | Update `VITE_API_URL` and redeploy Vercel. |
+| 404 after refreshing a page | Verify `frontend/vercel.json` contains the SPA rewrite configuration. |
 
 ---
 
-## Cost estimate (hobby / small team)
+# Cost Estimate
 
-| Service | Free tier | Paid starting |
-|---------|-----------|---------------|
-| Vercel | Generous free tier | ~$20/mo Pro |
-| Railway | $5 credit/month | ~$5+/mo usage-based |
-| GitHub Actions | 2000 min/month free | Usually sufficient |
+| Service | Free Tier | Notes |
+|---------|-----------|------|
+| Vercel | Generous | Suitable for React/Vite applications |
+| Render | Free Web Service | May sleep after inactivity |
+| Neon | Generous PostgreSQL Free Tier | Serverless PostgreSQL with backups |
+| GitHub | Free | Source control and automatic deployments |
 
 ---
 
-## Alternative backend: Render
+# Recommended for Production
 
-If you prefer Render over Railway:
+- Enable HTTPS (enabled by default on Vercel and Render)
+- Use a strong 32+ character `JWT_SECRET`
+- Disable public registration (`ALLOW_PUBLIC_REGISTRATION=false`)
+- Configure custom domains (optional)
+- Monitor `/api/health`
+- Schedule regular database backups
+- Enable automatic deployments from GitHub
+- Keep all secrets in environment variables—never commit them to Git
 
-1. [render.com](https://render.com) → **New Web Service** → connect repo, root `backend`
-2. **New PostgreSQL** database → copy `Internal Database URL`
-3. Set same env vars as Railway table above
-4. Health check path: `/api/health`
-5. Use Render URL in `VITE_API_URL` and `FRONTEND_URL`
-
-Render is slightly slower on free tier (cold starts) but works well for MVPs.
+This deployment stack is ideal for MVPs, portfolios, and small production applications, offering automatic deployments, managed infrastructure, and minimal maintenance.
+````

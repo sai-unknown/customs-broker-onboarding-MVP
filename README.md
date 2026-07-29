@@ -1,285 +1,233 @@
-# Customs Broker Onboarding System
+# 🚢 Customs Broker Onboarding System
 
-Enterprise-style MVP for customs brokers to onboard and manage exporter/importer customers.
+A production-ready **Customs Broker Onboarding MVP** built with modern web technologies. The application enables customs brokers to securely onboard and manage importer/exporter customers through a responsive dashboard with authentication, customer management, and PostgreSQL-backed data storage.
 
-## Stack
-
-- **Frontend:** React 19, Vite, Tailwind CSS, React Router, React Hook Form, Zod
-- **Backend:** Node.js, Express 5, PostgreSQL, JWT, bcrypt, Zod
-- **Database:** PostgreSQL
-- **Deployment:** Vercel, Railway, Docker Compose
-
-## Prerequisites
-
-- Node.js 20+
-- PostgreSQL 14+ (for local dev)
-- Docker & Docker Compose (for production deployment)
+> **Live Demo**
+>
+> **Frontend:** https://customs-broker-onboarding-mvp.vercel.app
+> **Backend API:** https://customs-broker-api.onrender.com
 
 ---
 
-## Production Deployment
+# ✨ Features
 
-### Recommended: Vercel (frontend) + Railway (backend)
+* 🔐 Secure JWT Authentication
+* 👤 Broker Registration & Login
+* 👥 Customer Management (CRUD)
+* 📊 Dashboard Overview
+* 🛡️ Role-based Broker Data Isolation
+* ✅ Client & Server-side Validation with Zod
+* 🔒 Password Hashing using bcrypt
+* ⚡ Rate Limiting & Security Headers
+* 🌐 Responsive React UI
+* 🚀 Production Deployment Ready
 
-| Layer | Platform | Docs |
-|-------|----------|------|
-| Frontend | [Vercel](https://vercel.com) | `frontend/vercel.json` |
-| Backend API | [Railway](https://railway.app) | `backend/railway.json` |
-| Database | Railway PostgreSQL | `backend/database/schema.sql` |
-| CI/CD | GitHub Actions | `.github/workflows/` |
+---
 
-**Full step-by-step guide:** see [DEPLOYMENT.md](./DEPLOYMENT.md)
+# 🛠 Tech Stack
 
-Quick start:
+## Frontend
 
-```bash
-# 1. Push repo to GitHub
-# 2. Deploy backend on Railway (root: backend/) + add PostgreSQL
-# 3. Run schema.sql on Railway Postgres
-# 4. Deploy frontend on Vercel (root: frontend/)
-# 5. Set VITE_API_URL=https://your-api.railway.app/api on Vercel
-# 6. Set FRONTEND_URL=https://your-app.vercel.app on Railway
+* React 19
+* Vite
+* Tailwind CSS
+* React Router
+* React Hook Form
+* Zod
+* Axios
+
+## Backend
+
+* Node.js
+* Express 5
+* PostgreSQL
+* JWT Authentication
+* bcrypt
+* Zod Validation
+
+## Database
+
+* Neon PostgreSQL
+
+## Deployment
+
+| Layer    | Platform        |
+| -------- | --------------- |
+| Frontend | Vercel          |
+| Backend  | Render          |
+| Database | Neon PostgreSQL |
+
+---
+
+# 🏗 Project Structure
+
+```text
+customs-broker-onboarding-MVP/
+│
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.js
+│
+├── backend/
+│   ├── database/
+│   │   ├── schema.sql
+│   │   ├── seed.sql
+│   │   └── migrations/
+│   ├── src/
+│   ├── package.json
+│   └── .env.example
+│
+├── docker-compose.yml
+├── README.md
+└── LICENSE
 ```
 
-### Docker (self-hosted alternative)
+---
+
+# 🔌 API Endpoints
+
+## Authentication
+
+| Method | Endpoint           |
+| ------ | ------------------ |
+| POST   | /api/auth/register |
+| POST   | /api/auth/login    |
+| GET    | /api/auth/me       |
+
+---
+
+## Dashboard
+
+| Method | Endpoint       |
+| ------ | -------------- |
+| GET    | /api/dashboard |
+
+---
+
+## Customers
+
+| Method | Endpoint           |
+| ------ | ------------------ |
+| GET    | /api/customers     |
+| POST   | /api/customers     |
+| GET    | /api/customers/:id |
+| PUT    | /api/customers/:id |
+| DELETE | /api/customers/:id |
+
+---
+
+## Health
+
+| Method | Endpoint    |
+| ------ | ----------- |
+| GET    | /api/health |
+
+---
+
+# 🔒 Security Features
+
+* JWT Authentication (7-day expiry)
+* bcrypt Password Hashing
+* Helmet Security Headers
+* API Rate Limiting
+* Zod Request Validation
+* Broker Data Isolation
+* Environment Variable Validation
+* Graceful Shutdown
+* Production Error Handling
+* Secure CORS Configuration
+
+---
+
+# 🐳 Docker Support
 
 ```bash
 cp .env.example .env
+
 docker compose up --build -d
 ```
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for Vercel + Railway setup, or use Docker below.
-
-### Docker Deployment
-
-#### 1. Configure environment
+Useful commands
 
 ```bash
-cp .env.example .env
-```
+docker compose ps
 
-Edit `.env` and set a strong secret:
+docker compose logs
 
-```bash
-# Generate a secure JWT secret
-openssl rand -hex 32
-```
-
-Required values in `.env`:
-
-| Variable | Example | Notes |
-|----------|---------|-------|
-| `JWT_SECRET` | `a1b2c3...` | Min 32 chars, required |
-| `POSTGRES_PASSWORD` | strong password | Change default |
-| `FRONTEND_URL` | `https://yourdomain.com` | Used for CORS |
-| `ALLOW_PUBLIC_REGISTRATION` | `false` | Disable open signup in prod |
-
-#### 2. Start the stack
-
-```bash
-docker compose up --build -d
-```
-
-This starts:
-
-- **PostgreSQL** — database with schema auto-applied
-- **API** — Node.js backend on port 5000 (internal)
-- **Web** — Nginx serving React app + proxying `/api` to backend
-
-App available at `http://localhost` (or `WEB_PORT` from `.env`).
-
-#### 3. Verify health
-
-```bash
-curl http://localhost/health          # Frontend/nginx
-curl http://localhost/api/health      # Backend + database
-```
-
-#### 4. Production hardening checklist
-
-- [ ] Set strong `JWT_SECRET` (32+ chars)
-- [ ] Change `POSTGRES_PASSWORD` from default
-- [ ] Set `ALLOW_PUBLIC_REGISTRATION=false`
-- [ ] Set `FRONTEND_URL` to your real domain(s)
-- [ ] Put HTTPS in front (Cloudflare, AWS ALB, Caddy, etc.)
-- [ ] Configure PostgreSQL backups (volume snapshots or pg_dump cron)
-- [ ] Set up monitoring on `/api/health`
-- [ ] Restrict database port — do not expose `5432` publicly
-
-#### 5. Useful Docker commands
-
-```bash
-npm run docker:up       # Build and start
-npm run docker:down     # Stop containers
-npm run docker:logs     # Tail logs
-docker compose ps       # Check status
+docker compose down
 ```
 
 ---
 
-## Local Development
+# 🧪 Health Check
 
-### 1. Database setup
+Backend
 
-```bash
-createdb customs_broker
-psql -d customs_broker -f backend/database/schema.sql
-psql -d customs_broker -f backend/database/seed.sql
+```
+GET /api/health
 ```
 
-Seed credentials: `sai@example.com` / `Password1`
+The endpoint verifies:
 
-For existing databases, apply migrations:
-
-```bash
-psql -d customs_broker -f backend/database/migrations/001_add_indexes_and_unique_constraints.sql
-```
-
-### 2. Backend
-
-```bash
-cd backend
-cp .env.example .env
-# Edit .env with your DATABASE_URL and JWT_SECRET (min 32 chars)
-npm install
-npm run dev
-```
-
-API runs at `http://localhost:5000`
-
-### 3. Frontend
-
-```bash
-cd frontend
-cp .env.example .env
-npm install
-npm run dev
-```
-
-App runs at `http://localhost:5173`
-
-Or from the project root:
-
-```bash
-npm run install:all
-npm run dev:backend   # terminal 1
-npm run dev:frontend  # terminal 2
-```
+* API availability
+* Database connectivity
+* Application health
 
 ---
 
-## Manual Production Build (without Docker)
+# 📸 Screenshots
 
-### Backend
+## Login Screen
 
-```bash
-cd backend
-cp .env.example .env
-# Set NODE_ENV=production, DATABASE_URL, JWT_SECRET, FRONTEND_URL
-npm ci --omit=dev
-NODE_ENV=production npm start
-```
+![Login Screen](./screenshots/Login%20Page.png)
 
-### Frontend
+## Register Screen
 
-```bash
-cd frontend
-cp .env.example .env
-# Set VITE_API_URL=https://api.yourdomain.com/api
-npm ci
-npm run build
-```
+![Register Screen](./screenshots/Register%20Page.png)
 
-Serve `frontend/dist` with Nginx or any static host. Use the included `frontend/nginx.conf` as a reference for SPA routing and API proxying.
+## Dashboard Screen
 
----
+![Dashboard](./screenshots/Dashboard.png)
 
-## Environment Variables
+## Customer List Screen
 
-### Root (Docker) — `.env`
+![Customer List Screen](./screenshots/Customer%20List.png)
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `JWT_SECRET` | Yes | Min 32 characters |
-| `POSTGRES_USER` | No | Default `broker` |
-| `POSTGRES_PASSWORD` | Yes | Database password |
-| `POSTGRES_DB` | No | Default `customs_broker` |
-| `FRONTEND_URL` | Yes | CORS origin(s) |
-| `ALLOW_PUBLIC_REGISTRATION` | No | Default `false` in Docker |
-| `WEB_PORT` | No | Default `80` |
+## Add Customer Form Screen
 
-### Backend (`backend/.env`)
+![Add Customer Form Screen](./screenshots/Customer%20Form.png)
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
-| `JWT_SECRET` | Yes | Min 32 characters |
-| `FRONTEND_URL` | Yes (prod) | Comma-separated CORS origins |
-| `PORT` | No | Default 5000 |
-| `HOST` | No | Default 0.0.0.0 |
-| `NODE_ENV` | No | `production` enables strict mode |
-| `ALLOW_PUBLIC_REGISTRATION` | No | Set `false` to disable signup |
-| `DB_POOL_MAX` | No | Connection pool size |
-| `DB_SSL` | No | Set `true` for managed PostgreSQL |
+## Mobile View
 
-### Frontend (`frontend/.env`)
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `VITE_API_URL` | Yes | Dev: `http://localhost:5000/api`, Docker prod: `/api` |
+![Mobile View](./screenshots/Mobile%20View.png)git
 
 ---
 
-## API Endpoints
+# 📈 Future Enhancements
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/api/health` | No | Health check (includes DB) |
-| POST | `/api/auth/register` | No | Register broker |
-| POST | `/api/auth/login` | No | Login |
-| GET | `/api/auth/me` | Yes | Current user |
-| GET | `/api/dashboard` | Yes | Broker-scoped stats |
-| GET/POST | `/api/customers` | Yes | List / create customers |
-| GET/PUT/DELETE | `/api/customers/:id` | Yes | Customer CRUD |
-
----
-
-## Security Features
-
-- JWT authentication with 7-day expiry
-- bcrypt password hashing
-- Rate limiting on auth (20/15min) and API (300/15min)
-- Helmet security headers
-- CORS restricted to configured origins
-- Broker-scoped customer data (tenant isolation)
-- Input validation with Zod (frontend + backend)
-- Unique customer email/GSTIN per broker
-- Graceful shutdown (SIGTERM/SIGINT)
-- Production error masking (no stack traces to clients)
-- Optional registration lockdown via env var
+* Email Verification
+* Password Reset
+* Audit Logs
+* Role-Based Access Control
+* Document Uploads
+* Search & Filters
+* CSV / Excel Export
+* Notifications
+* Analytics Dashboard
+* Automated Testing
 
 ---
 
-## Architecture (Production)
+# 👨‍💻 Author
 
-```
-Browser
-   │
-   ▼
-[Nginx :80] ── /api/* ──► [Express API :5000]
-   │                              │
-   └── /* (React SPA)             ▼
-                           [PostgreSQL :5432]
-```
+**Sai Unknown**
+
+GitHub: https://github.com/sai-unknown
 
 ---
 
-## Troubleshooting
+# 📄 License
 
-| Issue | Fix |
-|-------|-----|
-| `JWT_SECRET must be at least 32 characters` | Use a longer secret in `.env` |
-| CORS errors | Ensure `FRONTEND_URL` matches your browser URL exactly |
-| `503 unhealthy` on `/api/health` | Database not ready — check `docker compose logs db` |
-| Frontend blank page | Verify `VITE_API_URL` was set at build time |
-| Registration disabled | Set `ALLOW_PUBLIC_REGISTRATION=true` (dev only) |
+This project is licensed under the MIT License.
